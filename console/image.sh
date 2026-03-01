@@ -8,8 +8,7 @@ chroot_exec apk add \
 # enable loading edgeport modules on startup
 echo "io_edgeport" >> "${ROOTFS_PATH}/etc/modules"
 
-chroot_exec addgroup console
-chroot_exec adduser -h /var/empty -g "Console User" -s /bin/sh -G console -D -H console
+chroot_exec adduser -h /var/empty -g "Console User" -s /bin/sh -G dialout -D -H console
 
 # configure firewall
 cat <<EOF > "${ROOTFS_PATH}/etc/nftables.nft"
