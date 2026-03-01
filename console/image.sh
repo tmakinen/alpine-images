@@ -72,6 +72,8 @@ if [ ! -c "$port" ]; then
     exit 1
 fi
 
+echo "Connecting to ${port}..."
+echo "Escape character is ^X (Ctrl + X)"
 busybox microcom -s 115200 "$port"
 EOF
 chmod 0755 "${ROOTFS_PATH}/usr/local/bin/console"
