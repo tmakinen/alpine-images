@@ -6,12 +6,12 @@ chroot_exec apk add \
     nftables
 
 # enable loading edgeport modules on startup
-echo "io_edgeport" >> "${ROOTFS_PATH}/etc/modules"
+echo "io_edgeport" >>"${ROOTFS_PATH}/etc/modules"
 
 chroot_exec adduser -h /var/empty -g "Console User" -s /bin/sh -G dialout -D -H console
 
 # configure firewall
-cat <<EOF > "${ROOTFS_PATH}/etc/nftables.nft"
+cat <<EOF >"${ROOTFS_PATH}/etc/nftables.nft"
 #!/usr/sbin/nft -f
 
 flush ruleset
@@ -50,13 +50,13 @@ EOF
 chroot_exec rc-update add nftables default
 
 # configure ntpd
-echo 'NTPD_OPTS="-N -p time.oob.foo.sh"' > "${ROOTFS_PATH}/etc/conf.d/ntpd"
+echo 'NTPD_OPTS="-N -p time.oob.foo.sh"' >"${ROOTFS_PATH}/etc/conf.d/ntpd"
 
 # configure syslog
-echo 'SYSLOGD_OPTS="-R loghost.oob.foo.sh -L -K -t"' > "${ROOTFS_PATH}/etc/conf.d/syslog"
+echo 'SYSLOGD_OPTS="-R loghost.oob.foo.sh -L -K -t"' >"${ROOTFS_PATH}/etc/conf.d/syslog"
 
 # create console script
-cat <<"EOF" > "${ROOTFS_PATH}/usr/local/bin/console"
+cat <<"EOF" >"${ROOTFS_PATH}/usr/local/bin/console"
 #!/bin/sh
 
 set -eu
