@@ -24,7 +24,8 @@ jobs:
         run: |
           ! grep -P "^\t" --line-number *.sh
       - name: Run ShellCheck
-        run:
+        run: |
           find . -name \*.sh -type f -exec shellcheck {} +
       - name: Run shfmt
+        run: |
           find . -name \*.sh -type f -exec shfmt -d -i 4 {} +
