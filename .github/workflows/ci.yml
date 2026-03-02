@@ -17,8 +17,8 @@ jobs:
         uses: actions/checkout@v6
       - name: Install dependencies
         run: |
-          apt-get update
-          apt-get -y install --no-install-recommends \
+          sudo apt-get update
+          sudo apt-get -y install --no-install-recommends \
             shfmt
       - name: Check for tabs in shell scripts
         run: |
