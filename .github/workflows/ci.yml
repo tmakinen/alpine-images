@@ -37,6 +37,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
       - name: Create default.env file
         run: cp default.env.example default.env
       - name: Build images
