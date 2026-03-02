@@ -29,3 +29,18 @@ jobs:
       - name: Run shfmt
         run: |
           find . -name \*.sh -type f -exec shfmt -d -i 4 {} +
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs:
+      - linter
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Create default.env file
+        run: cp default.env.example default.env
+      - name: Build images
+        run: |
+          for script in ./*/build.sh ; do
+              "$script"
+          done
