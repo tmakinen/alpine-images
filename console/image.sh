@@ -10,7 +10,7 @@ chroot_exec apk add \
     echo "dtparam=audio=off"
     echo "dtoverlay=disable-bt"
     echo "dtoverlay=disable-wifi"
-} >> "${BOOTFS_PATH}/config.txt"
+} >>"${BOOTFS_PATH}/config.txt"
 
 # enable loading edgeport modules on startup
 echo "io_edgeport" >>"${ROOTFS_PATH}/etc/modules"
