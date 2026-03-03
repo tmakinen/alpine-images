@@ -5,6 +5,13 @@ chroot_exec apk add \
     linux-firmware-edgeport \
     nftables
 
+# disable audio, bluetooth and wifi
+{
+    echo "dtparam=audio=off"
+    echo "dtoverlay=disable-bt"
+    echo "dtoverlay=disable-wifi"
+} >> "${BOOTFS_PATH}/config.txt"
+
 # enable loading edgeport modules on startup
 echo "io_edgeport" >>"${ROOTFS_PATH}/etc/modules"
 
