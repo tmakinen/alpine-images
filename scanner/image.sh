@@ -10,7 +10,7 @@ chroot_exec apk add \
     echo "dtparam=audio=off"
     echo "dtoverlay=disable-bt"
     echo "dtoverlay=disable-wifi"
-} >> "${BOOTFS_PATH}/config.txt"
+} >>"${BOOTFS_PATH}/config.txt"
 
 # configure firewall
 cat <<EOF >"${ROOTFS_PATH}/etc/nftables.nft"
