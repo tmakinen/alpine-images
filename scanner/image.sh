@@ -3,7 +3,9 @@
 chroot_exec apk add \
     openssh-sftp-server \
     nftables \
-    sane
+    sane \
+    sane-saned \
+    sane-backends
 
 # disable audio, bluetooth and wifi
 {
@@ -27,6 +29,9 @@ table ip filter {
         ip saddr 172.20.24.1/32 tcp dport 22 accept
         ip saddr 172.20.24.2/32 tcp dport 22 accept
         ip saddr 172.20.24.3/32 tcp dport 22 accept
+        ip saddr 172.20.24.1/32 tcp dport 6566 accept
+        ip saddr 172.20.24.2/32 tcp dport 6566 accept
+        ip saddr 172.20.24.3/32 tcp dport 6566 accept
         reject with icmp type host-prohibited
     }
     chain FORWARD {
@@ -50,6 +55,9 @@ table ip6 filter {
 }
 EOF
 chroot_exec rc-update add nftables default
+
+# configure saned
+chroot_exec rc-update add saned default
 
 # configure ntpd
 echo 'NTPD_OPTS="-N -p time.print.foo.sh"' >"${ROOTFS_PATH}/etc/conf.d/ntpd"

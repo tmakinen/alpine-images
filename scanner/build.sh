@@ -11,6 +11,7 @@ tag="$(curl -sSf -H "Authorization: Bearer ${token}" "https://ghcr.io/v2/raspi-a
 podman run --rm \
     --env "IMG_NAME=scanner" \
     --env "ADDITIONAL_KERNEL_MODULES=nf_* nft_*" \
+    --env "SIZE_ROOT_FS=300M" \
     --env-file "$(pwd)/../default.env" \
     --volume "$(pwd)/image.sh:/input/image.sh:z" \
     --volume "$(pwd):/output:z" \
