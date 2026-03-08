@@ -1,7 +1,6 @@
 #!/bin/sh
 
 chroot_exec apk add \
-    openssh-sftp-server \
     nftables \
     sane \
     sane-saned \

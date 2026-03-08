@@ -9,7 +9,6 @@ link_file() {
 }
 
 chroot_exec apk add \
-    openssh-sftp-server \
     linux-firmware-edgeport \
     nftables
 
