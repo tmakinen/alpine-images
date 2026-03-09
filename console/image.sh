@@ -66,6 +66,9 @@ table ip6 filter {
 EOF
 chroot_exec rc-update add nftables default
 
+# log locally with syslog even when remote server is defined
+sed -i -e 's/^\(SYSLOGD_OPTS="\)\(.*\)$/\1-L \2/' "${ROOTFS_PATH}/etc/conf.d/syslog"
+
 # make ntpd and syslog configurable
 link_file "/etc/conf.d/ntpd"
 link_file "/etc/conf.d/syslog"
