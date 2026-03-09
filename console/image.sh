@@ -2,15 +2,18 @@
 
 link_file() {
     src="$1"
-    mv "${ROOTFS_PATH}${src}" "${ROOTFS_PATH}${src}.alpine-builder"
-    ln -sf "/data${src}" "${ROOTFS_PATH}${src}"
     mkdir -p "${DATAFS_PATH}/$(dirname "$src")"
-    cp -a "${ROOTFS_PATH}${src}.alpine-builder" "${DATAFS_PATH}${src}"
+    if [ -f "${ROOTFS_PATH}${src}" ]; then
+        mv "${ROOTFS_PATH}${src}" "${ROOTFS_PATH}${src}.alpine-builder"
+        cp -a "${ROOTFS_PATH}${src}.alpine-builder" "${DATAFS_PATH}${src}"
+    fi
+    ln -sf "/data${src}" "${ROOTFS_PATH}${src}"
 }
 
 chroot_exec apk add \
     linux-firmware-edgeport \
-    nftables
+    nftables \
+    openssh-server
 
 # disable audio, bluetooth and wifi
 {
@@ -134,6 +137,23 @@ if [ -n "${opt7:-}" ]; then
 fi
 EOF
 chmod 0755 "${ROOTFS_PATH}/etc/udhcpc/post-bound/config.sh"
+
+# remove dropbear
+chroot_exec apk del dropbear
+
+# configure openssh
+sed -i \
+    -e 's|^#\?\(PermitRootLogin\) .*|\1 yes|' \
+    -e 's|^#\?\(HostKey /etc/ssh/ssh_host_ed25519_key\)|\1|' \
+    "${ROOTFS_PATH}/etc/ssh/sshd_config"
+sed -i -e 's|^#\?\(key_types_to_generate=\).*|\1"ed25519"|' "${ROOTFS_PATH}/etc/conf.d/sshd"
+link_file "/etc/ssh/ssh_host_ed25519_key"
+link_file "/etc/ssh/ssh_host_ed25519_key.pub"
+cat <<"EOF" >"${ROOTFS_PATH}/etc/ssh/sshd_config.d/crypo.conf"
+Ciphers aes256-gcm@openssh.com,chacha20-poly1305@openssh.com
+KexAlgorithms mlkem768x25519-sha256,sntrup761x25519-sha512@openssh.com,curve25519-sha256
+EOF
+chroot_exec rc-update add sshd default
 
 # create console script
 cat <<"EOF" >"${ROOTFS_PATH}/usr/local/bin/console"
