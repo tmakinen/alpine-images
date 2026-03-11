@@ -152,7 +152,7 @@ sed -i \
 sed -i -e 's|^#\?\(key_types_to_generate=\).*|\1"ed25519"|' "${ROOTFS_PATH}/etc/conf.d/sshd"
 link_file "/etc/ssh/ssh_host_ed25519_key"
 link_file "/etc/ssh/ssh_host_ed25519_key.pub"
-cat <<"EOF" >"${ROOTFS_PATH}/etc/ssh/sshd_config.d/crypo.conf"
+cat <<"EOF" >"${ROOTFS_PATH}/etc/ssh/sshd_config.d/crypto.conf"
 Ciphers aes256-gcm@openssh.com,chacha20-poly1305@openssh.com
 KexAlgorithms mlkem768x25519-sha256,sntrup761x25519-sha512@openssh.com,curve25519-sha256
 EOF
