@@ -11,6 +11,7 @@ link_file() {
 }
 
 chroot_exec apk add \
+    drill \
     nftables \
     sane \
     sane-saned \
@@ -103,18 +104,17 @@ cat <<EOF >"${ROOTFS_PATH}/etc/nftables.nft"
 
 flush ruleset
 
-table ip filter {
+table inet filter {
+    set scanserv_hosts {
+        type ipv4_addr
+    }
     chain INPUT {
         type filter hook input priority 0; policy accept
         ct state vmap { established : accept, related : accept }
         ip protocol icmp accept
         iifname lo accept
-        ip saddr 172.20.24.1/32 tcp dport 22 accept
-        ip saddr 172.20.24.2/32 tcp dport 22 accept
-        ip saddr 172.20.24.3/32 tcp dport 22 accept
-        ip saddr 172.20.24.1/32 tcp dport 6566 accept
-        ip saddr 172.20.24.2/32 tcp dport 6566 accept
-        ip saddr 172.20.24.3/32 tcp dport 6566 accept
+        ip saddr 172.20.27.0/24 tcp dport 22 accept
+        tcp dport 6566 ip saddr @scanserv_hosts accept
         reject with icmp type host-prohibited
     }
     chain FORWARD {
@@ -140,4 +140,39 @@ EOF
 chroot_exec rc-update add nftables default
 
 # configure saned
+link_file /etc/sane.d/saned.conf
+cat <<"EOF" > "${ROOTFS_PATH}/etc/init.d/saned-config"
+#!/sbin/openrc-run
+
+name="Dynamic config for SANE server"
+description="Resolves scanservjs hosts via DNS SRV to build the saned whitelist"
+
+depend() {
+    need net
+    before saned
+}
+
+start() {
+    ebegin "Querying infrastructure DNS for scanservjs hosts"
+
+    : > /etc/sane.d/saned.conf
+    drill -Q SRV "_scanserv._tcp.$(hostname -d)" | while read -r _ _ _ name ; do
+        name="${name%.}"
+        echo "$name" >> /etc/sane.d/saned.conf
+        drill -Q "$name" | while read -r ip ; do
+            nft add element inet filter scanserv_hosts { "$ip" }
+        done
+    done
+
+    if [ ! -s /etc/sane.d/saned.conf ]; then
+        ip route show | awk '$1 != "default" { print $1 }' | while read -r subnet ; do
+            echo "$subnet" >> /etc/sane.d/saned.conf
+            nft add element inet filter scanserv_hosts { "$subnet" }
+        done
+    fi
+    eend $?
+}
+EOF
+chmod 0755 "${ROOTFS_PATH}/etc/init.d/saned-config"
+chroot_exec rc-update add saned-config default
 chroot_exec rc-update add saned default
