@@ -14,7 +14,9 @@ chroot_exec apk add \
     nftables \
     sane \
     sane-saned \
-    sane-backends
+    sane-utils \
+    sane-backend-genesys \
+    sane-backend-pixma
 
 # disable audio, bluetooth and wifi
 {
