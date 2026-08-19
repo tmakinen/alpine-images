@@ -14,10 +14,14 @@ chroot_exec apk add \
     drill \
     nftables \
     sane \
-    sane-saned \
-    sane-utils \
-    sane-backend-genesys \
-    sane-backend-pixma
+    sane-utils
+
+# ipp-usb is only in testing repo
+chroot_exec apk add \
+    --allow-untrusted \
+    --no-cache \
+    --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing \
+    ipp-usb
 
 # disable audio, bluetooth and wifi
 {
@@ -105,16 +109,13 @@ cat <<EOF >"${ROOTFS_PATH}/etc/nftables.nft"
 flush ruleset
 
 table inet filter {
-    set scanserv_hosts {
-        type ipv4_addr
-    }
     chain INPUT {
         type filter hook input priority 0; policy accept
         ct state vmap { established : accept, related : accept }
         ip protocol icmp accept
         iifname lo accept
-        ip saddr 172.20.27.0/24 tcp dport 22 accept
-        tcp dport 6566 ip saddr @scanserv_hosts accept
+        tcp dport 22 accept
+        tcp dport 60000 accept
         reject with icmp type host-prohibited
     }
     chain FORWARD {
@@ -139,40 +140,7 @@ table ip6 filter {
 EOF
 chroot_exec rc-update add nftables default
 
-# configure saned
-link_file /etc/sane.d/saned.conf
-cat <<"EOF" > "${ROOTFS_PATH}/etc/init.d/saned-config"
-#!/sbin/openrc-run
-
-name="Dynamic config for SANE server"
-description="Resolves scanservjs hosts via DNS SRV to build the saned whitelist"
-
-depend() {
-    need net
-    before saned
-}
-
-start() {
-    ebegin "Querying infrastructure DNS for scanservjs hosts"
-
-    : > /etc/sane.d/saned.conf
-    drill -Q SRV "_scanserv._tcp.$(hostname -d)" | while read -r _ _ _ name ; do
-        name="${name%.}"
-        echo "$name" >> /etc/sane.d/saned.conf
-        drill -Q "$name" | while read -r ip ; do
-            nft add element inet filter scanserv_hosts { "$ip" }
-        done
-    done
-
-    if [ ! -s /etc/sane.d/saned.conf ]; then
-        ip route show | awk '$1 != "default" { print $1 }' | while read -r subnet ; do
-            echo "$subnet" >> /etc/sane.d/saned.conf
-            nft add element inet filter scanserv_hosts { "$subnet" }
-        done
-    fi
-    eend $?
-}
-EOF
-chmod 0755 "${ROOTFS_PATH}/etc/init.d/saned-config"
-chroot_exec rc-update add saned-config default
-chroot_exec rc-update add saned default
+# configure ipp-usb
+sed -i -e 's/interface = .*/interface = all/' "${ROOTFS_PATH}/etc/ipp-usb/ipp-usb.conf"
+sed -i -e 's|command_args="\(.*\)"$|command_args="\1 -path-lock-file /run/ipp-usb.lock"|' "${ROOTFS_PATH}/etc/init.d/ipp-usb"
+chroot_exec rc-update add ipp-usb default
